@@ -25,6 +25,7 @@ const read = (req, res, next) => {
   res.json({ data: res.locals.order });
 };
 
+//validates these properties for create and post
 const hasValidProperties = (req, res, next) => {
   const {
     data: { deliverTo, mobileNumber, dishes },
@@ -60,10 +61,12 @@ const create = (req, res, next) => {
   res.status(201).json({ data: newOrder });
 };
 
-const update = (req, res, next) => {
+//validator for update
+const isValidUpdate = (req, res, next) => {
   const {
-    data: { deliverTo, mobileNumber, dishes, id, status },
+    data: { id, status },
   } = req.body;
+
   if (id && id !== res.locals.order.id) {
     next({
       status: 400,
@@ -83,16 +86,24 @@ const update = (req, res, next) => {
       message: "A delivered order cannot be changed",
     });
   } else {
-    const newOrder = {
-      id: res.locals.order.id,
-      deliverTo,
-      mobileNumber,
-      dishes,
-      status,
-    };
-    orders[orders.indexOf(res.locals.order)] = newOrder;
-    res.json({ data: newOrder });
+    next();
   }
+};
+
+const update = (req, res, next) => {
+  const {
+    data: { deliverTo, mobileNumber, dishes, id, status },
+  } = req.body;
+
+  const newOrder = {
+    id: res.locals.order.id,
+    deliverTo,
+    mobileNumber,
+    dishes,
+    status,
+  };
+  orders[orders.indexOf(res.locals.order)] = newOrder;
+  res.json({ data: newOrder });
 };
 
 const destroy = (req, res, next) => {
@@ -110,7 +121,7 @@ const destroy = (req, res, next) => {
 module.exports = {
   read: [checkIfOrderExists, read],
   create: [hasValidProperties, create],
-  update: [checkIfOrderExists, hasValidProperties, update],
+  update: [checkIfOrderExists, hasValidProperties, isValidUpdate, update],
   destroy: [checkIfOrderExists, destroy],
   list,
 };
